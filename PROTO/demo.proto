@@ -56,6 +56,12 @@ message DemoRequest {
   double weight = 5;            // 64 位元浮點數（更高精度）
   bool is_active = 6;           // 布林值：true / false
 
+  enum Priority {
+    PRIORITY_UNSPECIFIED = 0;  // 預設值（proto3 強制要求第一個值為 0）
+    PRIORITY_LOW = 1;          // 低優先級
+    PRIORITY_MEDIUM = 2;       // 中優先級
+    PRIORITY_HIGH = 3;         // 高優先級
+  }
   // --- 複合型別 ---
   Priority priority = 7;        // 列舉型別
   Address address = 8;          // 巢狀訊息型別
@@ -74,4 +80,12 @@ message DemoResponse {
   string message = 2;            // 回應訊息
   string received_data_summary = 3;  // 收到的資料摘要（讓你確認資料正確傳送）
   int64 processed_at = 4;       // 處理時間（Unix timestamp）
+}
+
+message DemoResponseExtendFields {
+  bool success = 1;              // 是否成功
+  string message = 2;            // 回應訊息
+  string received_data_summary = 3;  // 收到的資料摘要（讓你確認資料正確傳送）
+  int64 processed_at = 4;       // 處理時間（Unix timestamp）
+  string extra_info = 5;        // 額外資訊（示範擴充欄位）
 }
