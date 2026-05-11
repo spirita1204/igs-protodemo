@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"proto-demo-server/pb" // 這是由 protoc 從 .proto 產生的 Go 程式碼
 
@@ -84,6 +85,60 @@ func main() {
 		return
 	}
 	fmt.Printf("Decoded DemoResponse struct:\n%+v\n", &decodedResponse)
+	// 測試 unknownField get unknown field
+	unknownFields := decodedResponse.ProtoReflect().GetUnknown()
+	if unknownFields != nil {
+		fmt.Printf("Unknown fields in decodedResponse: %v\n", unknownFields)
+		fmt.Printf("轉字串: %s\n", string(unknownFields[2:]))
+		// wire type 判斷
+		wireType := unknownFields[0] & 0x7
+		fmt.Printf("Wire type: %d\n", wireType)
+	}
+	// 測試 unknownField set unknown field
+	unknownFields2 := decodedResponse.ProtoReflect().GetUnknown()
+	if unknownFields2 != nil {
+		decodedResponse.ProtoReflect().SetUnknown([]byte{})
+		fmt.Printf("Set unknown fields to empty:\n%v\n", &decodedResponse)
+	}
+	// 取得protobuf資料版本不符情況 – 取得資料欄位較多 定義少一個欄位的struct 欲轉回成DemoResponseExtendFields struct
+	DemoResponse := &pb.DemoResponse{
+		Success:             true,
+		Message:             "Hello, World!",
+		ProcessedAt:         1234567890,
+		ReceivedDataSummary: "123",
+	}
+	fmt.Printf("DemoResponse struct:\n%+v\n", DemoResponse)
+	protoDataDemoResponse, err := proto.Marshal(DemoResponse)
+	if err != nil {
+		fmt.Printf("Failed to marshal DemoResponse: %v\n", err)
+		return
+	}
+	var decodedResponseExtendFields pb.DemoResponseExtendFields
+	err = proto.Unmarshal(protoDataDemoResponse, &decodedResponseExtendFields)
+	if err != nil {
+		fmt.Printf("Failed to unmarshal protoDataDemoResponse: %v\n", err)
+		return
+	}
+	fmt.Printf("Decoded DemoResponseExtendFields struct:\n%+v\n", &decodedResponseExtendFields)
+	fmt.Printf("Decoded ExtraInfo: %s\n", decodedResponseExtendFields.GetExtraInfo())
+	// protobuf 與 json 資料比較
+	// 將 demoRequest 轉成 json 格式
+	jsonFormatData, err := json.Marshal(demoRequest)
+	if err != nil {
+		fmt.Printf("Failed to marshal demoRequest to JSON: %v\n", err)
+		return
+	}
+	fmt.Printf("JSON data: %s\n", string(jsonFormatData))
+	// 將 demoRequest 轉成 proto 格式
+	protoFormatData, err := proto.Marshal(demoRequest)
+	if err != nil {
+		fmt.Printf("Failed to marshal demoRequest to Protobuf: %v\n", err)
+		return
+	}
+	fmt.Printf("Protobuf binary data: %v\n", protoFormatData)
+	// 比較資料長度
+	fmt.Printf("Length of JSON data: %d bytes\n", len(jsonFormatData))
+	fmt.Printf("Length of Protobuf data: %d bytes\n", len(protoFormatData))
 
 	// 	// ===== 建立 Gin 路由器 =====
 	// 	// gin.Default() 會自動加上 Logger 和 Recovery 中介軟體
